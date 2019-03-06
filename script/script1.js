@@ -30,22 +30,22 @@ function Hamburger(size, stuffing) {
 
     let toppings = [];
 
-    this.getToppings = function () {
+    this.getToppingsFromConstr = function () {
         return toppings.slice();
     };
 
-    this.setToppings = function (newToppings) {
+    this.setToppingsFromConstr = function (newToppings) {
         toppings = newToppings;
     };
 
-    this.getSize = function () {
+    this.getSizeFromConstr = function () {
         for (let key in this) {
             if (key === 'SIZE_SMALL') return 'SIZE_SMALL';
             else if (key === 'SIZE_LARGE') return 'SIZE_LARGE';
         }
     };
 
-    this.getStuffing = function () {
+    this.getStuffingFromConstr = function () {
 
         for (let key in this) {
             if (key === 'STUFFING_CHEESE') return 'STUFFING_CHEESE';
@@ -73,23 +73,141 @@ Hamburger.TOPPING_SPICE = {price: 15, calories: 0};
  */
 Hamburger.prototype.addTopping = function (topping) {
 
-    let resArr = [];
-    if (topping === Hamburger.TOPPING_MAYO || topping === Hamburger.TOPPING_SPICE){
+    let resArr;
+    try {
 
-        resArr = this.getToppings();
-        if (resArr.indexOf(topping) >= 0) {
-            resArr.push(topping);
+        if (topping === Hamburger.TOPPING_MAYO || topping === Hamburger.TOPPING_SPICE) {
+
+            resArr = this.getToppingsFromConstr();
+
+            if (resArr.indexOf(topping) >= 0) {
+                throw new HamburgerException('You try to add already existing topping!');
+            } else {
+                resArr.push(topping);
+                this.setToppingsFromConstr(resArr);
+            }
+
         } else {
-            resArr.splice(resArr.indexOf(topping), 1);
+            throw new HamburgerException('Unknown topping')
+        }
+    } catch (e) {
+        console.log(e.toString());
+    }
+};
+
+/**
+ * Убрать добавку, при условии, что она ранее была
+ * добавлена.
+ *
+ * @param topping   Тип добавки
+ * @throws {HamburgerException}  При неправильном использовании
+ */
+Hamburger.prototype.removeTopping = function (topping) {
+
+    let resArr;
+    try {
+
+        if (topping === Hamburger.TOPPING_MAYO || topping === Hamburger.TOPPING_SPICE) {
+
+            resArr = this.getToppingsFromConstr();
+
+            if (resArr.indexOf(topping) === -1) {
+                throw new HamburgerException('You try to remove not existing topping!');
+            } else {
+                resArr.splice(resArr.indexOf(topping), 1);
+                this.setToppingsFromConstr(resArr);
+            }
+
+        } else {
+            throw new HamburgerException('Unknown topping')
+        }
+    } catch (e) {
+        console.log(e.toString());
+    }
+
+
+};
+
+/**
+ * Получить список добавок.
+ *
+ * @return {Array} Массив добавленных добавок, содержит константы
+ *                 Hamburger.TOPPING_*
+ */
+Hamburger.prototype.getToppings = function () {
+    let resArr;
+    let result = [];
+    try {
+
+        resArr = this.getToppingsFromConstr();
+
+        if (resArr.length === 0){
+
+            throw new HamburgerException('You have not add any topping yet!');
+
+        } else {
+
+            resArr.forEach((value) => {
+
+                if (value === Hamburger.TOPPING_MAYO){
+                    result.push('TOPPING_MAYO');
+                } else if (value === Hamburger.TOPPING_SPICE){
+                    result.push('TOPPING_SPICE');
+                }
+
+            });
+
         }
 
-    } else {
-        throw new HamburgerException ('Unknown topping')
+        return result;
+
+    } catch (e) {
+        console.log(e.toString());
+        return result;
     }
 
 };
 
+/**
+ * Узнать размер гамбургера
+ */
+Hamburger.prototype.getSize = function (){
+  return this.getSizeFromConstr();
+};
 
+/**
+ * Узнать начинку гамбургера
+ */
+Hamburger.prototype.getStuffing = function (){
+  return this.getStuffingFromConstr();
+};
+
+/**
+ * Узнать цену гамбургера
+ * @return {Number} Цена в тугриках
+ */
+Hamburger.prototype.calculatePrice = function () {
+    let sizePrice = this[this.getSize()].price;
+    let stuffingPrice = this[this.getStuffing()].price;
+    let toppingPrice = this.getToppingsFromConstr().reduce(((previousValue, currentValue) => previousValue + currentValue.price), 0);
+
+    return sizePrice + stuffingPrice + toppingPrice;
+
+};
+
+/**
+ * Узнать калорийность
+ * @return {Number} Калорийность в калориях
+ */
+Hamburger.prototype.calculateCalories = function (){
+
+    let sizeCalories = this[this.getSize()].calories;
+    let stuffingCalories = this[this.getStuffing()].calories;
+    let toppingCalories = this.getToppingsFromConstr().reduce(((previousValue, currentValue) => previousValue + currentValue.calories), 0);
+
+    return sizeCalories + stuffingCalories + toppingCalories;
+
+};
 /**
  * Представляет информацию об ошибке в ходе работы с гамбургером.
  * Подробности хранятся в свойстве message.
@@ -108,15 +226,24 @@ HamburgerException.prototype.toString = function () {
 };
 
 let a1 = new Hamburger(Hamburger.SIZE_SMALL, Hamburger.STUFFING_POTATO);
-console.log(a1);
+// console.log(a1);
 console.log(a1.getStuffing());
 console.log(a1.getSize());
 
-//a2 = new Hamburger(Hamburger.SIZE_LARGE);
-// let a3 = new Hamburger();
+console.log(a1.getToppings());
+a1.addTopping(Hamburger.TOPPING_MAYO);
+a1.addTopping(Hamburger.TOPPING_SPICE);
 
-// console.log(a1);
-//console.log(a2);
-// console.log(a3);
+console.log("Price: %f", a1.calculatePrice());
+console.log(a1.getToppings());
 
-// throw new HamburgerException('HELLO');
+a1.removeTopping(Hamburger.TOPPING_MAYO);
+
+console.log(a1.getToppings());
+console.log("Calories: %f", a1.calculateCalories());
+console.log("Price: %f", a1.calculatePrice());
+
+
+
+
+
